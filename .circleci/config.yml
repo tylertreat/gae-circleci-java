@@ -26,7 +26,7 @@ jobs:
          enum: ["DEV", "STAGING", "PROD"]
      docker:
        - image: google/cloud-sdk
-       - image: circleci/openjdk:8-jdk-stretch # ...with this image as the primary container; this is where all `steps` will run
+       - image: circleci/openjdk:8-jdk-stretch
      steps:
        - checkout
        - run:
