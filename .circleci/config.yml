@@ -1,0 +1,73 @@
+version: 2.1
+jobs:
+   build:
+     docker: # run the steps with Docker
+       - image: circleci/openjdk:8-jdk-stretch # ...with this image as the primary container; this is where all `steps` will run
+     working_directory: ~/helloworld-java # directory where steps will run
+     steps: # a collection of executable commands
+       - checkout # check out source code to working directory
+       - restore_cache: # restore the saved cache after the first run or if `pom.xml` has changed
+           # Read about caching dependencies: https://circleci.com/docs/2.0/caching/
+
+           key: helloworld-java-{{ checksum "pom.xml" }}
+
+       - run: mvn dependency:go-offline # gets the project dependencies
+       - save_cache: # saves the project dependencies
+           paths:
+             - ~/.m2
+
+           key: helloworld-java-{{ checksum "pom.xml" }}
+
+
+   deploy_to_gae:
+     parameters:
+       environment:
+         type: enum
+         enum: ["DEV", "STAGING", "PROD"]
+     docker:
+       - image: google/cloud-sdk
+     steps:
+       - checkout
+       - run:
+           command: |
+             apt-get install -y maven default-jdk
+       - run:
+           command: |
+             GCP_KEY=$<< parameters.environment >>_GCP_KEY
+             echo ${GCP_KEY} > ${HOME}/gcp-key.json
+
+       - run: |
+           PROJECT_ID=$<< parameters.environment >>_PROJECT_ID
+           gcloud --quiet config set project $PROJECT_ID
+           gcloud auth activate-service-account --key-file=${HOME}/gcp-key.json
+       - run: |
+           chmod +x mvn
+           ./mvn -B package appengine:deploy
+
+
+#################
+workflows:
+#################
+     pipeline:
+       jobs:
+         - build
+
+         - deploy_to_gae:
+             name: deploy-dev
+             environment: DEV
+             requires:
+               - build
+#             filters:
+#               branches:
+#                 only: master
+
+
+#         - deploy_to_gae:
+#             name: deploy-staging
+#             environment: STAGING
+#             requires:
+#               - deploy-dev
+#             filters:
+#               branches:
+#                 only: master
+
