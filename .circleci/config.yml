@@ -42,8 +42,7 @@ jobs:
            gcloud --quiet config set project $PROJECT_ID
            gcloud auth activate-service-account --key-file=${HOME}/gcp-key.json
        - run: |
-           chmod +x mvn
-           ./mvn -B package appengine:deploy
+           mvn -B package appengine:deploy
 
 
 #################
