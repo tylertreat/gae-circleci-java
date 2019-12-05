@@ -1,0 +1,16 @@
+runtime: custom
+env: flex
+
+runtime_config:
+  jdk: openjdk8
+  server: tomcat8 # Run on Tomcat8
+
+handlers:
+- url: /.*
+  script: this field is required, but ignored
+
+threadsafe: true
+
+inbound_services:
+- warmup
+
